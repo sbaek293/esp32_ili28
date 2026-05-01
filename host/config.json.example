@@ -1,0 +1,14 @@
+{
+    "_comment": "Copy this file to config.json and fill in your values.",
+    "port": "COM3",
+    "baud": 115200,
+    "weather": {
+        "api_key": "YOUR_OPENWEATHERMAP_API_KEY",
+        "city": "Seoul",
+        "units": "metric",
+        "update_interval_sec": 300
+    },
+    "media": {
+        "update_interval_sec": 2
+    }
+}
