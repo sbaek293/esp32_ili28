@@ -16,8 +16,16 @@ Protocol proto(ui);
 // ============================================================
 void setup() {
     Serial.begin(SERIAL_BAUD);
+    // Give the host time to open the serial monitor
+    delay(200);
+    Serial.println("[setup] Serial OK");
+    Serial.flush();
 
+    Serial.println("[setup] calling ui.begin()...");
+    Serial.flush();
     ui.begin();   // init display, draws splash, backlight on
+    Serial.println("[setup] ui.begin() returned OK");
+    Serial.flush();
 }
 
 // ============================================================
