@@ -14,6 +14,7 @@ import argparse
 import json
 import logging
 import os
+import platform
 import sys
 import time
 from datetime import datetime
@@ -189,7 +190,21 @@ def run(cfg: dict) -> None:
 # ============================================================
 # Entry point
 # ============================================================
+def _check_platform() -> None:
+    """Exit early on unsupported platforms (only Windows and macOS are supported)."""
+    supported = ("Windows", "Darwin")
+    current = platform.system()
+    if current not in supported:
+        print(
+            f"[ERROR] 이 호스트 앱은 Windows와 macOS에서만 지원됩니다. "
+            f"현재 플랫폼: {current}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
 def main() -> None:
+    _check_platform()
     parser = argparse.ArgumentParser(description="ESP32 ILI9341 Dongle Display host")
     parser.add_argument("--config", default="config.json",
                         help="Path to config JSON (default: config.json)")
