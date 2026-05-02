@@ -3,7 +3,7 @@
 // ============================================================
 // Constructor / begin
 // ============================================================
-UI::UI(TFT_eSPI &tft) : _tft(tft) {}
+UI::UI(TFT_eSPI &tft) : _tft(tft), _spr(&tft) {}
 
 void UI::begin() {
     // Allow Serial to stabilise before touching the SPI bus.
@@ -445,18 +445,19 @@ void UI::_drawTitleScroll() {
     }
 
     // Use a sprite or simple clip trick: set a viewport, draw offset text
-    // TFT_eSPI doesn't have native clipping, so we draw into a sprite
-    TFT_eSprite spr(&_tft);
-    spr.createSprite(AREA_W, AREA_H);
-    if (!spr.created()) {
-        // Heap exhausted – skip this frame rather than crash
-        return;
+    // TFT_eSPI doesn't have native clipping, so we draw into a sprite.
+    // _spr is a class member; create the buffer once and reuse it every frame.
+    if (!_spr.created()) {
+        _spr.createSprite(AREA_W, AREA_H);
+        if (!_spr.created()) {
+            // Heap exhausted – skip this frame rather than crash
+            return;
+        }
     }
-    spr.fillSprite(C_BG);
-    spr.setTextColor(C_MEDIA_TITLE, C_BG);
-    spr.setTextDatum(ML_DATUM);
-    spr.setTextFont(2);
-    spr.drawString(_media.title, -_scrollX, 0);
-    spr.pushSprite(AREA_X, AREA_Y);
-    spr.deleteSprite();
+    _spr.fillSprite(C_BG);
+    _spr.setTextColor(C_MEDIA_TITLE, C_BG);
+    _spr.setTextDatum(ML_DATUM);
+    _spr.setTextFont(2);
+    _spr.drawString(_media.title, -_scrollX, 0);
+    _spr.pushSprite(AREA_X, AREA_Y);
 }

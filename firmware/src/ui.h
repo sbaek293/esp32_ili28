@@ -92,6 +92,9 @@ private:
     bool     _calDone     = false;
     uint16_t _calData[5]  = TOUCH_CAL_DATA;
 
+    // Title scroll sprite (member to avoid stack pressure each frame)
+    TFT_eSprite _spr;
+
     // Drawing helpers
     void _drawStatusBar();
     void _drawClockSection();
