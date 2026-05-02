@@ -442,8 +442,7 @@ pio device monitor
 
 ## 호스트(PC) 앱 설정
 
-> **지원 OS**: Windows 10/11, macOS 12 이상  
-> Linux는 지원하지 않습니다.
+> **지원 OS**: Windows 10/11, macOS (Monterey 12 이상 권장)
 
 ### 1. Python 설치
 
