@@ -84,7 +84,10 @@ class SerialComm:
         while self._running:
             # ── Reconnect if port is not open ─────────────────────────
             if not (self._ser and self._ser.is_open):
-                time.sleep(_RECONNECT_DELAY)
+                # Wait in short increments so close() can interrupt promptly
+                deadline = time.monotonic() + _RECONNECT_DELAY
+                while self._running and time.monotonic() < deadline:
+                    time.sleep(0.1)
                 if not self._running:
                     break
                 try:
@@ -120,6 +123,6 @@ class SerialComm:
                     if self._ser:
                         try:
                             self._ser.close()
-                        except Exception:
+                        except (serial.SerialException, OSError):
                             pass
                 time.sleep(0.5)
