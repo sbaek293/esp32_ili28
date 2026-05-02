@@ -5,6 +5,10 @@
 // ============================================================
 UI::UI(TFT_eSPI &tft) : _tft(tft), _spr(&tft) {}
 
+UI::~UI() {
+    _spr.deleteSprite();
+}
+
 void UI::begin() {
     // Allow Serial to stabilise before touching the SPI bus.
     // This also lets the debug prints below appear before a potential crash.

@@ -407,6 +407,7 @@ void UI::_drawTitleScroll() {
     // TFT_eSPI doesn't have native clipping, so we draw into a sprite
     TFT_eSprite spr(&_tft);
     spr.createSprite(AREA_W, AREA_H);
+    if (!spr.created()) return;  // Heap exhausted – skip this frame rather than crash
     spr.fillSprite(C_BG);
     spr.setTextColor(C_MEDIA_TITLE, C_BG);
     spr.setTextDatum(ML_DATUM);

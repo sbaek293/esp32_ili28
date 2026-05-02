@@ -67,7 +67,7 @@ private:
 
     // Track what's drawn to avoid unnecessary redraws
     char _prevHHMM[6] = "";
-    char _prevSS[3]   = "";
+    char _prevSS[5]   = "";  // ":SS\0" = 4 bytes; [3] caused buffer overflow → crash
     char _prevDate[20] = "";
     char _prevCity[32] = "";
     char _prevTemp[8]  = "";

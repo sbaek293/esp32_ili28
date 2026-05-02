@@ -38,6 +38,7 @@ struct MediaData {
 class UI {
 public:
     explicit UI(TFT_eSPI &tft);
+    ~UI();  // releases sprite buffer
 
     // Call once in setup()
     void begin();
