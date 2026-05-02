@@ -41,6 +41,6 @@
 #define SMOOTH_FONT
 
 // ── SPI Speeds ───────────────────────────────────────────────
-#define SPI_FREQUENCY        40000000
-#define SPI_READ_FREQUENCY   20000000
-#define SPI_TOUCH_FREQUENCY   2500000
+#define SPI_FREQUENCY        27000000   // 27 MHz – safe default for ILI9341
+#define SPI_READ_FREQUENCY   16000000   // 16 MHz display read
+#define SPI_TOUCH_FREQUENCY   2500000   //  2.5 MHz touch (XPT2046 max)

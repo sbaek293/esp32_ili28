@@ -6,20 +6,44 @@
 UI::UI(TFT_eSPI &tft) : _tft(tft) {}
 
 void UI::begin() {
+    // Allow Serial to stabilise before touching the SPI bus.
+    // This also lets the debug prints below appear before a potential crash.
+    delay(500);
+
+    Serial.println("[UI] begin: tft.init()...");
+    Serial.flush();
     _tft.init();
+    Serial.println("[UI] tft.init() OK");
+    Serial.flush();
+
     _tft.setRotation(SCREEN_ROTATION);
+    Serial.println("[UI] setRotation OK");
+    Serial.flush();
+
     _tft.setSwapBytes(true);
 
     // Apply touch calibration
+    Serial.println("[UI] setTouch...");
+    Serial.flush();
     _tft.setTouch(_calData);
+    Serial.println("[UI] setTouch OK");
+    Serial.flush();
 
     // Backlight on (active-high; adjust if your module is active-low)
 #ifdef TFT_BL
+    Serial.println("[UI] backlight on...");
+    Serial.flush();
     pinMode(TFT_BL, OUTPUT);
     digitalWrite(TFT_BL, HIGH);
+    Serial.println("[UI] backlight OK");
+    Serial.flush();
 #endif
 
+    Serial.println("[UI] fillScreen...");
+    Serial.flush();
     _tft.fillScreen(C_BG);
+    Serial.println("[UI] fillScreen OK");
+    Serial.flush();
 
     // Show splash until the PC sends the first message
     _tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -28,6 +52,9 @@ void UI::begin() {
     _tft.drawString("ESP32 Dongle", SCREEN_W / 2, SCREEN_H / 2 - 20);
     _tft.setTextFont(2);
     _tft.drawString("Waiting for PC...", SCREEN_W / 2, SCREEN_H / 2 + 16);
+
+    Serial.println("[UI] begin complete");
+    Serial.flush();
 
     // Don't set _fullRedraw here – the splash must stay until first data arrives
     _fullRedraw = false;
@@ -421,6 +448,10 @@ void UI::_drawTitleScroll() {
     // TFT_eSPI doesn't have native clipping, so we draw into a sprite
     TFT_eSprite spr(&_tft);
     spr.createSprite(AREA_W, AREA_H);
+    if (!spr.created()) {
+        // Heap exhausted – skip this frame rather than crash
+        return;
+    }
     spr.fillSprite(C_BG);
     spr.setTextColor(C_MEDIA_TITLE, C_BG);
     spr.setTextDatum(ML_DATUM);
