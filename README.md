@@ -349,7 +349,7 @@ firmware/arduino/User_Setup_S3_Supermini.h →  (위 경로)/TFT_eSPI/User_Setup
 | Tools > CPU Frequency | 160 MHz |
 | Tools > Flash Mode | QIO |
 | Tools > Flash Size | 4MB (32Mb) |
-| Tools > Port | COM3 (Windows) / /dev/ttyUSB0 (Linux) |
+| Tools > Port | COM3 (Windows) / /dev/ttyUSB0 (Linux) / /dev/cu.usbmodem* (macOS) |
 
 **ESP32-S3:**
 
@@ -361,10 +361,14 @@ firmware/arduino/User_Setup_S3_Supermini.h →  (위 경로)/TFT_eSPI/User_Setup
 | Tools > CPU Frequency | 240 MHz |
 | Tools > Flash Mode | QIO 80MHz |
 | Tools > Flash Size | 4MB (32Mb) |
-| Tools > Port | COM3 (Windows) / /dev/ttyUSB0 (Linux) |
+| Tools > Port | COM3 (Windows) / /dev/ttyUSB0 (Linux) / /dev/cu.usbmodem* (macOS) |
 
 > **"USB CDC On Boot: Enabled"은 반드시 설정해야 합니다.**  
 > 이 옵션이 있어야 USB로 Serial 통신이 작동합니다.
+
+> **macOS 포트 관련 참고사항**  
+> macOS에서 ESP32-C3/S3 보드는 `/dev/cu.usbmodem*` 형태로 표시됩니다.  
+> 포트가 목록에 나타나지 않으면 아래 **FAQ – macOS 포트 미표시** 항목을 참고하세요.
 
 ---
 
@@ -620,6 +624,24 @@ esp32_ili28/
 ---
 
 ## 자주 묻는 질문
+
+**Q. macOS에서 `/dev/cu.usbmodem` 포트가 Arduino IDE 목록에 나타나지 않음**  
+A. 다음 순서로 해결하세요:
+
+1. **USB CDC On Boot 옵션 확인** – `Tools > USB CDC On Boot`가 **Enabled**인지 확인합니다.  
+   (처음 펌웨어를 올리기 전이라 이 설정을 적용할 수 없을 경우 아래 2번으로 진행)
+
+2. **수동 부트로더 모드 진입** – 포트가 보이지 않을 때:  
+   a. ESP32 보드의 **BOOT** 버튼을 누른 채로  
+   b. **RESET** 버튼을 짧게 누른 뒤 떼고  
+   c. **BOOT** 버튼을 놓습니다  
+   → 부트로더 모드에서 `/dev/cu.usbmodem*` 포트가 목록에 나타납니다.
+
+3. **포트 확인** – 터미널에서 `ls /dev/cu.*` 를 실행하여 `/dev/cu.usbmodem101` 같은 이름이 있는지 확인합니다.
+
+4. **케이블 교체** – 충전 전용 USB-C 케이블은 데이터 전송을 지원하지 않습니다. 데이터 통신이 가능한 케이블을 사용하세요.
+
+5. **Arduino IDE 재시작** – 포트를 연결한 뒤 Arduino IDE를 재시작하면 목록이 갱신됩니다.
 
 **Q. 업로드 시 "A fatal error occurred: Failed to connect to ESP32" 오류**  
 A. ESP32 보드의 BOOT 버튼을 누른 채로 업로드 버튼을 누르고, "Connecting..." 메시지가 나오면 BOOT 버튼을 놓으세요.
