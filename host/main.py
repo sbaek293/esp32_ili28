@@ -191,12 +191,12 @@ def run(cfg: dict) -> None:
 # Entry point
 # ============================================================
 def _check_platform() -> None:
-    """Exit early on unsupported platforms (only Windows and macOS are supported)."""
-    supported = ("Windows", "Darwin")
+    """Exit early on unsupported platforms (Windows, macOS, and Linux are supported)."""
+    supported = ("Windows", "Darwin", "Linux")
     current = platform.system()
     if current not in supported:
         print(
-            f"[ERROR] 이 호스트 앱은 Windows와 macOS에서만 지원됩니다. "
+            f"[ERROR] 이 호스트 앱은 Windows, macOS, Linux에서만 지원됩니다. "
             f"현재 플랫폼: {current}",
             file=sys.stderr,
         )

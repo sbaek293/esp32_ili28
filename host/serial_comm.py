@@ -7,9 +7,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_RECONNECT_DELAY = 3.0  # seconds to wait between reconnect attempts
+
 
 class SerialComm:
-    """Sends JSON lines to ESP32 and enqueues received CMD: lines."""
+    """Sends JSON lines to ESP32 and enqueues received CMD: lines.
+
+    The reader thread automatically attempts to re-open the port when the
+    connection is lost (e.g. USB cable unplugged and re-plugged).
+    """
 
     def __init__(self, port: str, baud: int = 115200, timeout: float = 1.0):
         self._port = port
@@ -45,6 +51,8 @@ class SerialComm:
         self._running = False
         if self._ser and self._ser.is_open:
             self._ser.close()
+        if self._reader_thread and self._reader_thread.is_alive():
+            self._reader_thread.join(timeout=2)
 
     @property
     def is_open(self) -> bool:
@@ -74,6 +82,25 @@ class SerialComm:
     def _reader(self) -> None:
         buf = b""
         while self._running:
+            # ── Reconnect if port is not open ─────────────────────────
+            if not (self._ser and self._ser.is_open):
+                time.sleep(_RECONNECT_DELAY)
+                if not self._running:
+                    break
+                try:
+                    with self._lock:
+                        self._ser = serial.Serial(
+                            port=self._port,
+                            baudrate=self._baud,
+                            timeout=self._timeout,
+                        )
+                    logger.info("Reconnected to %s", self._port)
+                    buf = b""
+                except serial.SerialException as exc:
+                    logger.warning("Reconnect failed (%s): %s", self._port, exc)
+                continue
+
+            # ── Normal read loop ──────────────────────────────────────
             try:
                 if self._ser and self._ser.in_waiting:
                     chunk = self._ser.read(self._ser.in_waiting)
@@ -89,4 +116,10 @@ class SerialComm:
                     time.sleep(0.01)
             except (serial.SerialException, OSError) as exc:
                 logger.warning("Serial read error: %s", exc)
+                with self._lock:
+                    if self._ser:
+                        try:
+                            self._ser.close()
+                        except Exception:
+                            pass
                 time.sleep(0.5)
