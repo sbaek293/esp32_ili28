@@ -38,6 +38,7 @@ struct MediaData {
 class UI {
 public:
     explicit UI(TFT_eSPI &tft);
+    ~UI();  // releases sprite buffer
 
     // Call once in setup()
     void begin();
@@ -67,7 +68,7 @@ private:
 
     // Track what's drawn to avoid unnecessary redraws
     char _prevHHMM[6] = "";
-    char _prevSS[3]   = "";
+    char _prevSS[5]   = "";  // ":SS\0" = 4 bytes; [3] caused buffer overflow → crash
     char _prevDate[20] = "";
     char _prevCity[32] = "";
     char _prevTemp[8]  = "";
@@ -88,9 +89,16 @@ private:
     bool    _scrollPaused  = true;
 
     // Touch state
-    uint32_t _lastTouchMs = 0;
-    bool     _calDone     = false;
-    uint16_t _calData[5]  = TOUCH_CAL_DATA;
+    uint32_t _lastTouchMs   = 0;
+    bool     _calDone       = false;
+    uint16_t _calData[5]    = TOUCH_CAL_DATA;
+
+    // Non-blocking button highlight state
+    int8_t   _btnPressedIdx = -1;
+    uint32_t _btnPressMs    = 0;
+
+    // Title scroll sprite (member to avoid stack pressure each frame)
+    TFT_eSprite _spr;
 
     // Drawing helpers
     void _drawStatusBar();

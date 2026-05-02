@@ -18,14 +18,17 @@ void setup() {
     Serial.begin(SERIAL_BAUD);
     // Give the host time to open the serial monitor
     delay(200);
+#ifdef DEBUG
     Serial.println("[setup] Serial OK");
     Serial.flush();
-
     Serial.println("[setup] calling ui.begin()...");
     Serial.flush();
+#endif
     ui.begin();   // init display, draws splash, backlight on
+#ifdef DEBUG
     Serial.println("[setup] ui.begin() returned OK");
     Serial.flush();
+#endif
 }
 
 // ============================================================

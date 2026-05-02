@@ -3,47 +3,68 @@
 // ============================================================
 // Constructor / begin
 // ============================================================
-UI::UI(TFT_eSPI &tft) : _tft(tft) {}
+UI::UI(TFT_eSPI &tft) : _tft(tft), _spr(&tft) {}
+
+UI::~UI() {
+    _spr.deleteSprite();
+}
 
 void UI::begin() {
     // Allow Serial to stabilise before touching the SPI bus.
-    // This also lets the debug prints below appear before a potential crash.
     delay(500);
 
+#ifdef DEBUG
     Serial.println("[UI] begin: tft.init()...");
     Serial.flush();
+#endif
     _tft.init();
+#ifdef DEBUG
     Serial.println("[UI] tft.init() OK");
     Serial.flush();
+#endif
 
     _tft.setRotation(SCREEN_ROTATION);
+#ifdef DEBUG
     Serial.println("[UI] setRotation OK");
     Serial.flush();
+#endif
 
     _tft.setSwapBytes(true);
 
     // Apply touch calibration
+#ifdef DEBUG
     Serial.println("[UI] setTouch...");
     Serial.flush();
+#endif
     _tft.setTouch(_calData);
+#ifdef DEBUG
     Serial.println("[UI] setTouch OK");
-    Serial.flush();
-
-    // Backlight on (active-high; adjust if your module is active-low)
-#ifdef TFT_BL
-    Serial.println("[UI] backlight on...");
-    Serial.flush();
-    pinMode(TFT_BL, OUTPUT);
-    digitalWrite(TFT_BL, HIGH);
-    Serial.println("[UI] backlight OK");
     Serial.flush();
 #endif
 
+    // Backlight on (active-high; adjust if your module is active-low)
+#ifdef TFT_BL
+#ifdef DEBUG
+    Serial.println("[UI] backlight on...");
+    Serial.flush();
+#endif
+    pinMode(TFT_BL, OUTPUT);
+    digitalWrite(TFT_BL, HIGH);
+#ifdef DEBUG
+    Serial.println("[UI] backlight OK");
+    Serial.flush();
+#endif
+#endif
+
+#ifdef DEBUG
     Serial.println("[UI] fillScreen...");
     Serial.flush();
+#endif
     _tft.fillScreen(C_BG);
+#ifdef DEBUG
     Serial.println("[UI] fillScreen OK");
     Serial.flush();
+#endif
 
     // Show splash until the PC sends the first message
     _tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -53,8 +74,10 @@ void UI::begin() {
     _tft.setTextFont(2);
     _tft.drawString("Waiting for PC...", SCREEN_W / 2, SCREEN_H / 2 + 16);
 
+#ifdef DEBUG
     Serial.println("[UI] begin complete");
     Serial.flush();
+#endif
 
     // Don't set _fullRedraw here – the splash must stay until first data arrives
     _fullRedraw = false;
@@ -93,6 +116,12 @@ void UI::setConnected(bool connected) {
 // Main tick – call every loop()
 // ============================================================
 void UI::tick() {
+    // Release button highlight after 80 ms (non-blocking)
+    if (_btnPressedIdx >= 0 && millis() - _btnPressMs >= 80) {
+        _drawButton(_btnPressedIdx, false);
+        _btnPressedIdx = -1;
+    }
+
     if (_fullRedraw) {
         _tft.fillScreen(C_BG);
         _drawStatusBar();
@@ -256,8 +285,8 @@ int8_t UI::pollTouch() {
         int16_t bx = _btnX(i);
         if (tx >= bx && tx <= bx + BTN_W) {
             _drawButton(i, true);
-            delay(80);
-            _drawButton(i, false);
+            _btnPressedIdx = i;
+            _btnPressMs    = now;
             return i;
         }
     }
@@ -445,18 +474,19 @@ void UI::_drawTitleScroll() {
     }
 
     // Use a sprite or simple clip trick: set a viewport, draw offset text
-    // TFT_eSPI doesn't have native clipping, so we draw into a sprite
-    TFT_eSprite spr(&_tft);
-    spr.createSprite(AREA_W, AREA_H);
-    if (!spr.created()) {
-        // Heap exhausted – skip this frame rather than crash
-        return;
+    // TFT_eSPI doesn't have native clipping, so we draw into a sprite.
+    // _spr is a class member; create the buffer once and reuse it every frame.
+    if (!_spr.created()) {
+        _spr.createSprite(AREA_W, AREA_H);
+        if (!_spr.created()) {
+            // Heap exhausted – skip this frame rather than crash
+            return;
+        }
     }
-    spr.fillSprite(C_BG);
-    spr.setTextColor(C_MEDIA_TITLE, C_BG);
-    spr.setTextDatum(ML_DATUM);
-    spr.setTextFont(2);
-    spr.drawString(_media.title, -_scrollX, 0);
-    spr.pushSprite(AREA_X, AREA_Y);
-    spr.deleteSprite();
+    _spr.fillSprite(C_BG);
+    _spr.setTextColor(C_MEDIA_TITLE, C_BG);
+    _spr.setTextDatum(ML_DATUM);
+    _spr.setTextFont(2);
+    _spr.drawString(_media.title, -_scrollX, 0);
+    _spr.pushSprite(AREA_X, AREA_Y);
 }

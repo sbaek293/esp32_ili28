@@ -19,7 +19,7 @@
 #define TFT_SCLK  6    // SCK / CLK
 #define TFT_CS   10    // Chip select (display)
 #define TFT_DC    4    // Data / Command (RS)
-#define TFT_RST   8    // Reset (connect to RST pin; -1 = tied to 3.3V)
+#define TFT_RST  -1    // Reset: GPIO8 is a strapping pin on ESP32-C3 – use software reset instead
 #define TFT_BL    3    // Backlight (HIGH = on)
 
 //   XPT2046 touch SPI (shares MOSI/MISO/SCK with display)

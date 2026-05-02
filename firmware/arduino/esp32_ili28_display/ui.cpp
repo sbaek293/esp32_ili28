@@ -3,7 +3,11 @@
 // ============================================================
 // Constructor / begin
 // ============================================================
-UI::UI(TFT_eSPI &tft) : _tft(tft) {}
+UI::UI(TFT_eSPI &tft) : _tft(tft), _spr(&tft) {}
+
+UI::~UI() {
+    _spr.deleteSprite();
+}
 
 void UI::begin() {
     _tft.init();
@@ -20,7 +24,17 @@ void UI::begin() {
 #endif
 
     _tft.fillScreen(C_BG);
-    _fullRedraw = true;
+
+    // Show splash until the PC sends the first message
+    _tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    _tft.setTextDatum(MC_DATUM);
+    _tft.setTextFont(4);
+    _tft.drawString("ESP32 Dongle", SCREEN_W / 2, SCREEN_H / 2 - 20);
+    _tft.setTextFont(2);
+    _tft.drawString("Waiting for PC...", SCREEN_W / 2, SCREEN_H / 2 + 16);
+
+    // Don't set _fullRedraw here – the splash must stay until first data arrives
+    _fullRedraw = false;
 }
 
 // ============================================================
@@ -45,6 +59,10 @@ void UI::setMedia(const MediaData &m) {
 }
 
 void UI::setConnected(bool connected) {
+    // First connection triggers a full redraw to replace the splash screen
+    if (connected && !_connected) {
+        _fullRedraw = true;
+    }
     _connected = connected;
 }
 
@@ -52,6 +70,12 @@ void UI::setConnected(bool connected) {
 // Main tick – call every loop()
 // ============================================================
 void UI::tick() {
+    // Release button highlight after 80 ms (non-blocking)
+    if (_btnPressedIdx >= 0 && millis() - _btnPressMs >= 80) {
+        _drawButton(_btnPressedIdx, false);
+        _btnPressedIdx = -1;
+    }
+
     if (_fullRedraw) {
         _tft.fillScreen(C_BG);
         _drawStatusBar();
@@ -215,8 +239,8 @@ int8_t UI::pollTouch() {
         int16_t bx = _btnX(i);
         if (tx >= bx && tx <= bx + BTN_W) {
             _drawButton(i, true);
-            delay(80);
-            _drawButton(i, false);
+            _btnPressedIdx = i;
+            _btnPressMs    = now;
             return i;
         }
     }
@@ -404,14 +428,19 @@ void UI::_drawTitleScroll() {
     }
 
     // Use a sprite or simple clip trick: set a viewport, draw offset text
-    // TFT_eSPI doesn't have native clipping, so we draw into a sprite
-    TFT_eSprite spr(&_tft);
-    spr.createSprite(AREA_W, AREA_H);
-    spr.fillSprite(C_BG);
-    spr.setTextColor(C_MEDIA_TITLE, C_BG);
-    spr.setTextDatum(ML_DATUM);
-    spr.setTextFont(2);
-    spr.drawString(_media.title, -_scrollX, 0);
-    spr.pushSprite(AREA_X, AREA_Y);
-    spr.deleteSprite();
+    // TFT_eSPI doesn't have native clipping, so we draw into a sprite.
+    // _spr is a class member; create the buffer once and reuse it every frame.
+    if (!_spr.created()) {
+        _spr.createSprite(AREA_W, AREA_H);
+        if (!_spr.created()) {
+            // Heap exhausted – skip this frame rather than crash
+            return;
+        }
+    }
+    _spr.fillSprite(C_BG);
+    _spr.setTextColor(C_MEDIA_TITLE, C_BG);
+    _spr.setTextDatum(ML_DATUM);
+    _spr.setTextFont(2);
+    _spr.drawString(_media.title, -_scrollX, 0);
+    _spr.pushSprite(AREA_X, AREA_Y);
 }
