@@ -20,7 +20,17 @@ void UI::begin() {
 #endif
 
     _tft.fillScreen(C_BG);
-    _fullRedraw = true;
+
+    // Show splash until the PC sends the first message
+    _tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    _tft.setTextDatum(MC_DATUM);
+    _tft.setTextFont(4);
+    _tft.drawString("ESP32 Dongle", SCREEN_W / 2, SCREEN_H / 2 - 20);
+    _tft.setTextFont(2);
+    _tft.drawString("Waiting for PC...", SCREEN_W / 2, SCREEN_H / 2 + 16);
+
+    // Don't set _fullRedraw here – the splash must stay until first data arrives
+    _fullRedraw = false;
 }
 
 // ============================================================
@@ -45,6 +55,10 @@ void UI::setMedia(const MediaData &m) {
 }
 
 void UI::setConnected(bool connected) {
+    // First time we get a connection trigger a full redraw to replace the splash
+    if (connected && !_connected) {
+        _fullRedraw = true;
+    }
     _connected = connected;
 }
 
