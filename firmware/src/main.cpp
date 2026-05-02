@@ -17,15 +17,7 @@ Protocol proto(ui);
 void setup() {
     Serial.begin(SERIAL_BAUD);
 
-    ui.begin();   // init display, set calibration, backlight on
-
-    // Show splash until PC sends first message
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.setTextDatum(MC_DATUM);
-    tft.setTextFont(4);
-    tft.drawString("ESP32 Dongle", SCREEN_W / 2, SCREEN_H / 2 - 20);
-    tft.setTextFont(2);
-    tft.drawString("Waiting for PC...", SCREEN_W / 2, SCREEN_H / 2 + 16);
+    ui.begin();   // init display, draws splash, backlight on
 }
 
 // ============================================================
